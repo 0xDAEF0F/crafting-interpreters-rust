@@ -1,6 +1,6 @@
 use crate::token::{Token, TokenType};
 
-struct Scanner {
+pub struct Scanner {
     tokens: Vec<Token>,
     source: String,
     start: usize,
@@ -9,7 +9,7 @@ struct Scanner {
 }
 
 impl Scanner {
-    pub fn build(str: String) -> Self {
+    pub fn new(str: String) -> Self {
         Scanner {
             source: str,
             tokens: vec![],
@@ -22,75 +22,67 @@ impl Scanner {
     pub fn scan_tokens(mut self) -> Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
-
-            let token = self.scan_token();
-
-            self.tokens.push(Token {
-                token_type: token,
-                line: self.line,
-            });
+            self.scan_token();
         }
 
-        self.tokens.push(Token {
-            token_type: TokenType::EOF,
-            line: self.line,
-        });
+        self.tokens
+            .push(Token::new(TokenType::EOF, "".to_string(), self.line));
 
         self.tokens
     }
 
-    fn scan_token(&mut self) -> TokenType {
+    fn scan_token(&mut self) {
         let next_char = &self.advance();
+
         match next_char {
-            '(' => TokenType::LeftParen,
-            ')' => TokenType::RightParen,
-            '{' => TokenType::LeftBrace,
-            '}' => TokenType::RightBrace,
-            ',' => TokenType::Comma,
-            '.' => TokenType::Dot,
-            '-' => TokenType::Minus,
-            '+' => TokenType::Plus,
-            ';' => TokenType::Semicolon,
-            '*' => TokenType::Star,
+            '(' => self.add_token(TokenType::LeftParen),
+            ')' => self.add_token(TokenType::RightParen),
+            '{' => self.add_token(TokenType::LeftBrace),
+            '}' => self.add_token(TokenType::RightBrace),
+            ',' => self.add_token(TokenType::Comma),
+            '.' => self.add_token(TokenType::Dot),
+            '-' => self.add_token(TokenType::Minus),
+            '+' => self.add_token(TokenType::Plus),
+            ';' => self.add_token(TokenType::Semicolon),
+            '*' => self.add_token(TokenType::Star),
             '!' => {
                 if self.match_char('=') {
-                    TokenType::BangEqual
+                    self.add_token(TokenType::BangEqual)
                 } else {
-                    TokenType::Bang
+                    self.add_token(TokenType::Bang)
                 }
             }
             '=' => {
                 if self.match_char('=') {
-                    TokenType::EqualEqual
+                    self.add_token(TokenType::EqualEqual)
                 } else {
-                    TokenType::Equal
+                    self.add_token(TokenType::Equal)
                 }
             }
             '<' => {
                 if self.match_char('=') {
-                    TokenType::LessEqual
+                    self.add_token(TokenType::LessEqual)
                 } else {
-                    TokenType::Less
+                    self.add_token(TokenType::Less)
                 }
             }
             '>' => {
                 if self.match_char('=') {
-                    TokenType::GreaterEqual
+                    self.add_token(TokenType::GreaterEqual)
                 } else {
-                    TokenType::Greater
+                    self.add_token(TokenType::Greater)
                 }
             }
-            '/' => {
-                if self.match_char('/') {
-                    while self.peek() != '\n' && !self.is_at_end() {
-                        self.advance();
-                    }
-                } else {
-                    TokenType::Slash
-                }
-            }
+            '/' => self.add_token(TokenType::Slash),
             _ => panic!("token does not exist"),
         }
+    }
+
+    // NOTE: Not sure about the literal stuff
+    fn add_token(&mut self, token_type: TokenType) {
+        let lexeme = &self.source[self.start..self.current];
+        let token = Token::new(token_type, lexeme.to_string(), self.line);
+        self.tokens.push(token)
     }
 
     fn match_char(&mut self, ch: char) -> bool {
@@ -98,7 +90,7 @@ impl Scanner {
             return false;
         }
 
-        let next_char = self.source.chars().nth(self.current + 1).unwrap();
+        let next_char = self.source.chars().nth(self.current).unwrap();
 
         if next_char != ch {
             return false;
@@ -110,7 +102,8 @@ impl Scanner {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= self.source.len()
+        let is_end = self.current >= self.source.len() - 1;
+        is_end
     }
 
     fn peek(&self) -> char {
@@ -123,6 +116,6 @@ impl Scanner {
 
     fn advance(&mut self) -> char {
         self.current += 1;
-        self.source.chars().nth(self.current).unwrap()
+        self.source.chars().nth(self.current - 1).unwrap()
     }
 }

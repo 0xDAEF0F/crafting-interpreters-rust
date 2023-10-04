@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub enum TokenType {
+    // Single character tokens
     LeftParen,
     RightParen,
     LeftBrace,
@@ -11,6 +12,7 @@ pub enum TokenType {
     Semicolon,
     Slash,
     Star,
+    // One or two character tokens
     Bang,
     BangEqual,
     Equal,
@@ -19,9 +21,11 @@ pub enum TokenType {
     GreaterEqual,
     Less,
     LessEqual,
-    Identifier,
+    // Literals
+    Identifier(String),
     String(String),
-    Number(i64),
+    Number(i128),
+    // Keywords
     And,
     Class,
     Else,
@@ -43,6 +47,20 @@ pub enum TokenType {
 
 #[derive(Debug)]
 pub struct Token {
-    pub token_type: TokenType,
-    pub line: usize,
+    token_type: TokenType,
+    lexeme: String,
+    literal: Option<String>,
+    line: usize,
+}
+
+// TODO: Implement a `toString` method or some kind of `Display` trait.
+impl Token {
+    pub fn new(token_type: TokenType, lexeme: String, line: usize) -> Self {
+        Self {
+            token_type,
+            lexeme,
+            literal: None,
+            line,
+        }
+    }
 }

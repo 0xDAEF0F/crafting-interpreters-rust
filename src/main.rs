@@ -1,14 +1,31 @@
-use std::{env, io, process};
+use crafting_interpreters::{scanner::Scanner, token::Token};
+use std::{env, fs, io, process};
+
+#[allow(dead_code)]
+struct Lox {
+    had_error: bool,
+}
 
 fn main() {
     let mut args = env::args().into_iter();
 
-    if args.len() > 1 {
-        eprintln!("Not supported");
-        process::exit(1);
+    if args.len() > 2 {
+        eprintln!("Usage: jlox [script]");
+        process::exit(64);
+    } else if args.len() == 2 {
+        args.next();
+        run_file(args.next().unwrap());
+    } else {
+        run_prompt();
     }
+}
 
-    run_prompt();
+fn run_file(path: String) {
+    let contents = fs::read_to_string(path).unwrap();
+    let is_error = run(contents);
+    if is_error {
+        process::exit(65);
+    }
 }
 
 fn run_prompt() {
@@ -28,10 +45,22 @@ fn run_prompt() {
     }
 }
 
-fn run(line: String) {
-    let tokens = Scanner::build(line).scan_tokens();
+// NOTE: returns `true` if an error ocurred.
+fn run(line: String) -> bool {
+    let scanner = Scanner::new(line);
+    let tokens: Vec<Token> = scanner.scan_tokens();
 
     for token in tokens {
         println!("{:?}", token);
     }
+
+    false
+}
+
+fn error(line: usize, message: String) {
+    report(line, "".to_string(), message)
+}
+
+fn report(line: usize, where_: String, message: String) {
+    eprintln!("[line {}] Error{}: {}", line, where_, message);
 }
