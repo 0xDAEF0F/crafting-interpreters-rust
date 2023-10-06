@@ -221,6 +221,12 @@ impl Scanner {
             self.advance();
         }
 
-        self.add_token(TokenType::Identifier);
+        let text = &self.source[self.start..self.current];
+
+        if let Some(token_type) = self.hm.get(text) {
+            self.add_token(token_type.clone());
+        } else {
+            self.add_token(TokenType::Identifier);
+        }
     }
 }
